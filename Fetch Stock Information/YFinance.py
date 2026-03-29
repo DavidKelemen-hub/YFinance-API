@@ -57,9 +57,12 @@ IF NOT EXISTS (
     WHERE StockID = ?
 )
 INSERT INTO dbo.Earnings
-(StockID, TrailingEPS, ForwardEPS, BookValue, FreeCashflow, EarningsGrowth, RevenueGrowth, SharesOutstanding, TotalDebt, TotalCash, EBITDA, DividendRate, DividendYield, DebtToEquity, ReturnOnEquity, ReturnOnAssets, CurrentRatio, GrossMargins, OperatingMargins, Sector, LatestUpdate)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(StockID, TrailingEPS, ForwardEPS, BookValue, FreeCashflow, EarningsGrowth, RevenueGrowth, SharesOutstanding, TotalDebt, TotalCash, EBITDA, DividendRate, DividendYield, DebtToEquity, ReturnOnEquity, ReturnOnAssets, CurrentRatio, GrossMargins, OperatingMargins, Beta, Sector, RiskFreeRate, LatestUpdate)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
+
+tnx = yf.Ticker("^TNX")
+risk_free_rate = tnx.info.get("regularMarketPrice") # needed for DDM
 
 for symbol in symbols:
     print(f"Fetching {symbol}...")
@@ -71,7 +74,6 @@ for symbol in symbols:
 
     ticker = yf.Ticker(symbol)
     info = ticker.info
-    #print(info)
     ######### values to write to DB - only quarterly#########
     trailingEPS = info.get("trailingEps")  # Some stocks may not have this field]
     forwardEPS = info.get("forwardEps")  # Some stocks may not have this field]
@@ -89,6 +91,7 @@ for symbol in symbols:
     debtToEquity = info.get("debtToEquity")  # Some stocks may not have this field
     returnOnEquity = info.get("returnOnEquity")  # Some stocks may not have this field
     returnOnAssets = info.get("returnOnAssets")  # Some stocks may not have this field
+    beta = info.get("beta")  # Some stocks may not have this field
     currentRatio = info.get("currentRatio")  # Some stocks may not have this field
     grossMargins = info.get("grossMargins")  # Some stocks may not have this field
     operatingMargins = info.get("operatingMargins")  # Some stocks may not have this field
@@ -113,13 +116,15 @@ for symbol in symbols:
       to_dec2_or_none(ebitda), 
       to_dec2_or_none(dividendRate), 
       to_dec2_or_none(dividendYield),
-      to_dec2_or_none(debtToEquity), 
+      to_dec2_or_none(debtToEquity),
+      to_dec2_or_none(beta), 
       to_dec2_or_none(returnOnEquity), 
       to_dec2_or_none(returnOnAssets), 
       to_dec2_or_none(currentRatio), 
       to_dec2_or_none(grossMargins), 
-      to_dec2_or_none(operatingMargins), 
+      to_dec2_or_none(operatingMargins),
       sector, 
+      to_dec2_or_none(risk_free_rate), 
       latestUpdate]
 
     cursor.execute(insert_sql, tuple(rows))
