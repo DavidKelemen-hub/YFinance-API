@@ -57,8 +57,8 @@ IF NOT EXISTS (
     WHERE StockID = ?
 )
 INSERT INTO dbo.Earnings
-(StockID, TrailingEPS, ForwardEPS, BookValue, FreeCashflow, EarningsGrowth, RevenueGrowth, SharesOutstanding, TotalDebt, TotalCash, EBITDA, DividendRate, DebtToEquity, ReturnOnEquity, ReturnOnAssets, CurrentRatio, GrossMargins, OperatingMargins, Sector, LatestUpdate)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(StockID, TrailingEPS, ForwardEPS, BookValue, FreeCashflow, EarningsGrowth, RevenueGrowth, SharesOutstanding, TotalDebt, TotalCash, EBITDA, DividendRate, DividendYield, DebtToEquity, ReturnOnEquity, ReturnOnAssets, CurrentRatio, GrossMargins, OperatingMargins, Sector, LatestUpdate)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 for symbol in symbols:
@@ -84,7 +84,6 @@ for symbol in symbols:
     totalCash = info.get("totalCash")  # Some stocks may not have this field
     ebitda = info.get("ebitda")  # Some stocks may not have this field
     trailingPE = info.get("trailingPE")  # Some stocks may not have this field
-    #dividendRate = info["dividendRate"]
     dividendRate = info.get("dividendRate")  # Some stocks may not have this field
     dividendYield = info.get("dividendYield")  # Some stocks may not have this field
     debtToEquity = info.get("debtToEquity")  # Some stocks may not have this field
@@ -113,6 +112,7 @@ for symbol in symbols:
       to_dec2_or_none(totalCash), 
       to_dec2_or_none(ebitda), 
       to_dec2_or_none(dividendRate), 
+      to_dec2_or_none(dividendYield),
       to_dec2_or_none(debtToEquity), 
       to_dec2_or_none(returnOnEquity), 
       to_dec2_or_none(returnOnAssets), 
