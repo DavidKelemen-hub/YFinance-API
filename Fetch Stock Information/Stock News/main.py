@@ -24,7 +24,7 @@ def get_ticker_news(symbol, newscount):
         })
     return news
 
-@app.get("/")
-async def root():
-    ticker_news = get_ticker_news("MSFT",3)
+@app.get("/news")
+async def root(symbol: str, size: int):
+    ticker_news = get_ticker_news(symbol,size)
     return {"message": ticker_news}
