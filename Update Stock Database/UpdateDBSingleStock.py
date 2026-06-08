@@ -1,21 +1,26 @@
 import yfinance as yf
 import pyodbc
 import pandas as pd
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 # ---------- CONFIG ----------
 SERVER = "localhost"
 DB_NAME = "StockData"
-SYMBOL = "PFG"        # <<< CHANGE THIS
+SYMBOL = "ADTX"        # <<< CHANGE THIS
 PERIOD = "max"
 # ---------------------------
 
-def to_dec2_or_none(x):
-    """Return Decimal rounded to 2dp or None for NaN/None (inserts NULL)."""
+def to_dec4_or_none(x):
     if pd.isna(x):
         return None
-    # str() avoids float binary artifacts; quantize enforces (10,2)-friendly values
-    return Decimal(str(x)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    try:
+        d = Decimal(str(x)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+        # decimal(18,4) max is 99999999999999.9999
+        if d > Decimal("99999999999999.9999") or d < Decimal("-99999999999999.9999"):
+            return None
+        return d
+    except (InvalidOperation, ValueError):
+        return None
 
 def to_int_or_none(x):
     """Return int or None for NaN/None (inserts NULL)."""
@@ -70,10 +75,10 @@ for _, r in df.iterrows():
         r["Date"],
         stock_id,
         r["Date"],
-        to_dec2_or_none(r["Open"]),
-        to_dec2_or_none(r["High"]),
-        to_dec2_or_none(r["Low"]),
-        to_dec2_or_none(r["Close"]),
+        to_dec4_or_none(r["Open"]),
+        to_dec4_or_none(r["High"]),
+        to_dec4_or_none(r["Low"]),
+        to_dec4_or_none(r["Close"]),
         to_int_or_none(r["Volume"])
     ))
 

@@ -12,5 +12,5 @@ import json
 
 # symbols = [item["symbol"] for item in data["symbols"]]
 
-data = yf.Ticker("ZYME")
-print(data.history(period='1mo'))
+data = yf.Ticker("ADTX")
+print(data.history(period='max'))
