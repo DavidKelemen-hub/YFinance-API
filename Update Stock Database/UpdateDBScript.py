@@ -3,12 +3,13 @@ import yfinance as yf
 import pyodbc
 import pandas as pd
 from decimal import Decimal, ROUND_HALF_UP
+import time
 
 # ---------- CONFIG ----------
 JSON_FILE = "sp100.json"
 DB_NAME = "StockData"
 SERVER = "localhost"
-START_PERIOD = "max"
+START_PERIOD = "1d"
 # ----------------------------
 
 def to_dec2_or_none(x):
@@ -55,7 +56,7 @@ INSERT INTO dbo.DailyPrices
 (StockID, TradeDate, OpenPrice, HighPrice, LowPrice, ClosePrice, Volume)
 VALUES (?, ?, ?, ?, ?, ?, ?)
 """
-
+start = time.time()
 # Loop through all symbols
 for symbol in symbols:
     print(f"Fetching {symbol}...")
@@ -92,6 +93,9 @@ for symbol in symbols:
     conn.commit()
 
     print(f"  ✅ Processed {len(rows)} rows for {symbol}")
+end = time.time()
+
+print(end - start)
 
 cursor.close()
 conn.close()
