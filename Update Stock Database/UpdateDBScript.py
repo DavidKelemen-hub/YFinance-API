@@ -95,7 +95,7 @@ for symbol in symbols:
     print(f"  ✅ Processed {len(rows)} rows for {symbol}")
 end = time.time()
 
-print(start - end)
+print(end - start)
 
 cursor.close()
 conn.close()
