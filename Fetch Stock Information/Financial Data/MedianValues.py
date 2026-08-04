@@ -22,7 +22,7 @@ cursor.fast_executemany = True
 ### get list of sectors from DB ###
 sector_sql_query = """
 SELECT DISTINCT Sector FROM Earnings
-WHERE Sector IS NOT NULL AND Sector != 'Unknown'
+WHERE Sector IS NOT NULL AND Sector != 'Unknown' AND Sector != ''
 """
 
 ### calculate median pe for each sector ###

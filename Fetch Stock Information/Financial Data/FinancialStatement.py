@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import json
 
 # ---------- CONFIG ----------
-JSON_FILE = "sp100.json"
+JSON_FILE = "combined_tickers.json"
 SERVER = "localhost"
 DB_NAME = "StockData"
 PERIOD = "max"

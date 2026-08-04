@@ -3,9 +3,9 @@ import requests
 import os
 import time
 
-JSON_FILE = "nasdaq_tickers.json"
-OUTPUT_DIR = "logos"
-TOKEN = ""  # <-- replace with your token
+JSON_FILE = "nyse_new_tickers.json"
+OUTPUT_DIR = "nyse_logos"
+TOKEN = "pk_WxmAqhBOQY2ioXO5HqBHQA"  # <-- replace with your token
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 with open(JSON_FILE, "r", encoding="utf-8-sig") as f:
