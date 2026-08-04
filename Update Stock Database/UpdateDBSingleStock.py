@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 # ---------- CONFIG ----------
 SERVER = "localhost"
 DB_NAME = "StockData"
-SYMBOL = "ADTX"        # <<< CHANGE THIS
+SYMBOL = "TIC"        # <<< CHANGE THIS
 PERIOD = "max"
 # ---------------------------
 
@@ -35,7 +35,7 @@ conn = pyodbc.connect(
     "Trusted_Connection=yes;"
 )
 cursor = conn.cursor()
-cursor.fast_executemany = True
+# ❌ fast_executemany removed — incompatible with NULL decimals + MERGE
 
 # Get StockID
 cursor.execute("SELECT StockID FROM dbo.Company WHERE Symbol = ?", SYMBOL)
@@ -58,34 +58,45 @@ if df.empty:
 df = df.reset_index()
 df["Date"] = pd.to_datetime(df["Date"]).dt.date
 
+# ✅ MERGE with UPDATE branch — overwrites existing rows so split-adjusted
+#    prices from yfinance replace stale, un-adjusted values already in the DB.
 insert_sql = """
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.DailyPrices
-    WHERE StockID = ? AND TradeDate = ?
-)
-INSERT INTO dbo.DailyPrices
-(StockID, TradeDate, OpenPrice, HighPrice, LowPrice, ClosePrice, Volume)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+MERGE dbo.DailyPrices AS target
+USING (SELECT ? AS StockID, CAST(? AS DATE) AS TradeDate) AS source
+ON target.StockID = source.StockID AND target.TradeDate = source.TradeDate
+WHEN MATCHED THEN
+    UPDATE SET
+        OpenPrice  = ?,
+        HighPrice  = ?,
+        LowPrice   = ?,
+        ClosePrice = ?,
+        Volume     = ?
+WHEN NOT MATCHED THEN
+    INSERT (StockID, TradeDate, OpenPrice, HighPrice, LowPrice, ClosePrice, Volume)
+    VALUES (?, ?, ?, ?, ?, ?, ?);
 """
 
 rows = []
 for _, r in df.iterrows():
+    open_p = to_dec4_or_none(r["Open"])
+    high_p = to_dec4_or_none(r["High"])
+    low_p = to_dec4_or_none(r["Low"])
+    close_p = to_dec4_or_none(r["Close"])
+    vol = to_int_or_none(r["Volume"])
+
     rows.append((
-        stock_id,
-        r["Date"],
-        stock_id,
-        r["Date"],
-        to_dec4_or_none(r["Open"]),
-        to_dec4_or_none(r["High"]),
-        to_dec4_or_none(r["Low"]),
-        to_dec4_or_none(r["Close"]),
-        to_int_or_none(r["Volume"])
+        stock_id, r["Date"],           # USING clause (match key)
+        # WHEN MATCHED -> UPDATE values
+        open_p, high_p, low_p, close_p, vol,
+        # WHEN NOT MATCHED -> INSERT values
+        stock_id, r["Date"],
+        open_p, high_p, low_p, close_p, vol
     ))
 
 cursor.executemany(insert_sql, rows)
 conn.commit()
 
-print(f"Inserted (or already existed) {len(rows)} rows for {SYMBOL}")
+print(f"Inserted/updated {len(rows)} rows for {SYMBOL}")
 
 cursor.close()
 conn.close()
